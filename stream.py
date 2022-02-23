@@ -1,26 +1,22 @@
-#!/usr/bin/env python3
+from bs4 import BeautifulSoup
+import requests
+from fetcher import __fetcher__
 
-import re
-import os
-
-
-inputname = input("Enter the name of movie, series or magnetlink to search:")
-name = inputname.replace(" ","+")
-print("Looking for: ",name)
-if re.search("magnet:\?xt=urn:btih:[a-zA-Z0-9]*",name):
-	peerflixcommand1 = "peerflix --mpv "+"\""+name+"\""
-	os.system(peerflixcommand1)
-
-x = " https://1337x.to/search/"
-greptorrentlink = ('curl -s https://1337x.to/search/%s/1/ | grep -Eo "torrent\/[0-9]{7}\/[a-zA-Z0-9-]*\/" | head -n 1' %name)
-link = os.popen(greptorrentlink).read()
-print("Found it! \n",link)
-fulllink = ('curl -s https://1337x.to/%s | grep -Po "magnet:\?xt=urn:btih:[a-zA-Z0-9]*" | head -n 1' %link)
-fl = fulllink.replace("\n"," ")
-
-magnetlink = os.popen(fl).read()
-print (magnetlink)
+moviename = input("movie: ").replace(" ","+")
+search_url = "https://www1.thepiratebay3.to/s/?q=" + moviename.replace(" ","+")
 
 
-peerflixcommand2 = "peerflix --mpv "+magnetlink+" -a"
-os.system(peerflixcommand2)
+page = requests.get(search_url)
+soup = BeautifulSoup(page.text,'html.parser')
+link = soup.find_all('a',{'class':'detLink'})[0]['href']
+
+movie_page = requests.get("https://www1.thepiratebay3.to/"+link)
+soup = BeautifulSoup(movie_page.text,'html.parser')
+
+magnet_div = soup.find_all('div',{'class':'download'})[0]
+
+magnetlink = magnet_div.find('a')['href'].split("&")[0]
+
+__fetcher__(magnetlink)
+
+
