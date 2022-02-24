@@ -3,7 +3,10 @@ import time
 import os
 import datetime
 import platform
-
+import vlc 
+import cv2
+import asyncio
+import multiprocessing as mp
 
 def __clear_command():
     os_type = platform.system()
@@ -12,6 +15,23 @@ def __clear_command():
     else:
         return "clear"
 
+def __get_file_name(handler):
+    return handler.get_torrent_info().name()
+
+async def __play_video(filename):
+    __full_file_path__ = os.path.join(os.getcwd(),'downloads',filename)
+
+    cap = cv2.VideoCapture(__full_file_path__)
+    
+    while(cap.isOpened()):
+        ret,frame = cap.read()
+        cv2.imshow('frame',frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+    return True
 
 
 def __fetcher__(link):
@@ -36,7 +56,14 @@ def __fetcher__(link):
 
     print("Starting", handler.name())
 
+    __started_playing__ = False
+    
+
+
+
+
     while (handler.status().state != libtorrent.torrent_status.seeding):
+        time.sleep(0.5)
         os.system(clear)
         s = handler.status()
         state_str = ['queued', 'checking', 'downloading metadata', \
@@ -44,7 +71,8 @@ def __fetcher__(link):
         print ('%.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s ' % \
                 (s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, \
                 s.num_peers, state_str[s.state]))
-        time.sleep(0.3)
+        if(not __started_playing__): __started_playing__ =  loop.run_until_complete(__play_video(__get_file_name(handler)))
+            
 
     end = time.time()
     print(handler.name(), "COMPLETE")
@@ -54,3 +82,5 @@ def __fetcher__(link):
 
 
 
+if __name__=='__main__':
+    __fetcher__("magnet:?xt=urn:btih:4C9B41D664D7B6B23F0BF39AE185858CBADDA3FF")

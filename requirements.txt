@@ -1,0 +1,7 @@
+certifi==2021.10.8
+charset-normalizer==2.0.12
+idna==3.3
+libtorrent==2.0.5
+python-vlc==3.0.12118
+requests==2.27.1
+urllib3==1.26.8
