@@ -1,5 +1,4 @@
 import requests
-import vlc
 import re
 from fetcher import __fetcher__
 
