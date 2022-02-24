@@ -3,9 +3,7 @@ import time
 import os
 import datetime
 import platform
-import vlc 
-import cv2
-import asyncio
+import vlc
 import multiprocessing as mp
 
 def __clear_command():
@@ -18,19 +16,12 @@ def __clear_command():
 def __get_file_name(handler):
     return handler.get_torrent_info().name()
 
-async def __play_video(filename):
+def __play_video(filename):
+    time.sleep(40)
     __full_file_path__ = os.path.join(os.getcwd(),'downloads',filename)
-
-    cap = cv2.VideoCapture(__full_file_path__)
     
-    while(cap.isOpened()):
-        ret,frame = cap.read()
-        cv2.imshow('frame',frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
+    player = vlc.MediaPlayer(__full_file_path__)
+    player.play()
     return True
 
 
@@ -59,6 +50,7 @@ def __fetcher__(link):
     __started_playing__ = False
     
 
+    pool = mp.Pool(processes=2)
 
 
 
@@ -71,7 +63,10 @@ def __fetcher__(link):
         print ('%.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s ' % \
                 (s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, \
                 s.num_peers, state_str[s.state]))
-        if(not __started_playing__): __started_playing__ =  loop.run_until_complete(__play_video(__get_file_name(handler)))
+        print("video will be played in 40s")
+        if(not __started_playing__):
+            pool.apply_async(__play_video,[__get_file_name(handler)])
+            __started_playing__ = True
             
 
     end = time.time()
@@ -83,4 +78,4 @@ def __fetcher__(link):
 
 
 if __name__=='__main__':
-    __fetcher__("magnet:?xt=urn:btih:4C9B41D664D7B6B23F0BF39AE185858CBADDA3FF")
+    __fetcher__("magnet:?xt=urn:btih:470472B7A2E0B60F4939E49D2A1B750C88C4BAAD")
