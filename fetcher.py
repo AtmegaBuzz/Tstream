@@ -6,12 +6,16 @@ import platform
 import vlc
 import multiprocessing as mp
 
+from qtfaststart.processor import get_index
+from qtfaststart.exceptions import FastStartException
+
+
 def __clear_command():
     os_type = platform.system()
     if os_type=="Windows":
-        return "cls"
+        os.system('cls')
     else:
-        return "clear"
+        os.system('clear')
 
 def __get_file_name(handler):
     return handler.get_torrent_info().name()
@@ -22,8 +26,6 @@ def __play_video(filename):
     
     player = vlc.MediaPlayer(__full_file_path__)
     player.play()
-    return True
-
 
 def __fetcher__(link):
     clear = __clear_command()
@@ -49,33 +51,30 @@ def __fetcher__(link):
 
     __started_playing__ = False
     
-
     pool = mp.Pool(processes=2)
 
-
-
     while (handler.status().state != libtorrent.torrent_status.seeding):
+
         time.sleep(0.5)
-        os.system(clear)
+        __clear_command()
         s = handler.status()
+        handler.set_sequential_download(True)
+
         state_str = ['queued', 'checking', 'downloading metadata', \
                 'downloading', 'finished', 'seeding', 'allocating']
         print ('%.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s ' % \
                 (s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, \
                 s.num_peers, state_str[s.state]))
-        print("video will be played in 40s")
+
         if(not __started_playing__):
             pool.apply_async(__play_video,[__get_file_name(handler)])
             __started_playing__ = True
-            
 
     end = time.time()
     print(handler.name(), "COMPLETE")
 
     print("Elapsed Time: ",int((end-begin)//60),"min :", int((end-begin)%60), "sec")
     print(datetime.datetime.now())  
-
-
 
 if __name__=='__main__':
     __fetcher__("magnet:?xt=urn:btih:470472B7A2E0B60F4939E49D2A1B750C88C4BAAD")
